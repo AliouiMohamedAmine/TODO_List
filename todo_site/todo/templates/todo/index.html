@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <title>{{title}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <!--style-->
+  <style>
+    body {
+      background-color: #007BFF; /* Blue background */
+      color: #333;
+    }
+
+    .card {
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.5),
+                  0 6px 20px 0 rgba(0,0,0,0.39);
+      background: #f8f9fa; /* Light gray background */
+      margin-bottom: 5%;
+      border-radius: 25px;
+      padding: 2%;
+      overflow: auto;
+      resize: both;
+      text-overflow: ellipsis;
+    }
+
+    .card:hover {
+      background: #d9e2ef; /* Lighter gray when hovered */
+    }
+
+    .submit_form {
+      text-align: center;
+      padding: 3%;
+      background: #e2e6ea; /* Another shade of light gray */
+      border-radius: 25px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.4),
+                  0 6px 20px 0 rgba(0,0,0,0.36);
+      max-width: 400px; /* Limit the width of the form */
+      margin: 0 auto; /* Center the form */
+    }
+
+    .btn-primary {
+      background-color: #ff6f61; /* Coral color for buttons */
+      border-color: #ff6f61;
+    }
+
+    .btn-primary:hover {
+      background-color: #ff5a4a;
+      border-color: #ff5a4a;
+    }
+
+    .btn-default {
+      background-color: #17a2b8; /* Light blue color for submit button */
+      border-color: #17a2b8;
+      color: white;
+    }
+
+    .btn-default:hover {
+      background-color: #138496;
+      border-color: #138496;
+    }
+
+    .title {
+      color: white; /* White color for the main title */
+      font-size: 3em; /* Larger font size */
+      font-weight: bold; /* Bold font */
+      text-align: center;
+      margin: 20px 0; /* Spacing around the title */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Shadow for popping effect */
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.3); /* Background highlight */
+      border-radius: 10px;
+    }
+
+    .checked {
+      text-decoration: line-through;
+      color: gray;
+    }
+  </style>
+</head>
+
+<body class="container-fluid">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-info">
+        <strong>{{ message }}</strong>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="title">
+        TO DO LIST
+      </div>
+      <hr />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <ul id="taskList">
+        {% for i in list %}
+          <li class="card {% if i.is_checked %}checked{% endif %}" data-id="{{ i.id }}">
+            <center><b>{{ i.title }}</b></center>
+            <hr/>
+            <p>{{ i.date }}</p>
+            <hr/>
+            <p>{{ i.details }}</p>
+            <br /><br />
+            <form action="/del/{{ i.id }}" method="POST" style="padding-right: 4%; padding-bottom: 3%;">
+              {% csrf_token %}
+              <button value="remove" type="submit" class="btn btn-primary" style="float: right;">
+                <span class="glyphicon glyphicon-trash"></span> Remove
+              </button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-1"></div>
+    <div class="col-md-3">
+      <div class="submit_form">
+        <form method="POST">
+          {% csrf_token %}
+          {{ forms }}
+          <center>
+            <input type="submit" class="btn btn-default" value="Submit" />
+          </center>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Add a "checked" symbol when clicking on a list item
+    var taskList = document.getElementById('taskList');
+    taskList.addEventListener('click', function(ev) {
+      if (ev.target.classList.contains('close')) {
+        // If the click target is the close button, do nothing
+        return;
+      }
+  
+      // Get the list item
+      var listItem = ev.target.closest('li');
+  
+      // Toggle the checked class based on whether the task is checked or not
+      if (!listItem.classList.contains('checked')) {
+        // If the task is not checked, add the checked class
+        listItem.classList.add('checked');
+      } else {
+        // If the task is checked, remove the checked class
+        listItem.classList.remove('checked');
+      }
+  
+      // Send AJAX request to update task status (optional)
+      var taskId = listItem.dataset.id;
+      var isChecked = listItem.classList.contains('checked');
+  
+      // Replace with your actual Django endpoint
+      var url = '/update_task_status/' + taskId + '/';
+  
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: {
+          'task_id': taskId,
+          'is_checked': isChecked,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+          // Handle success response (e.g., display a message)
+          console.log('Task status updated successfully.');
+        },
+        error: function(error) {
+          // Handle error response
+          console.error('Error updating task status:', error);
+        }
+      });
+    }, false);
+  </script>
+  
+  
+</body>
+</html>
